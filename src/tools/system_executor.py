@@ -1,25 +1,26 @@
 import os
-from interpreter import interpreter
+import subprocess
+from crewai.tools import tool
 
-# Configure open-interpreter to use local model logic if needed
-# We can also just configure it through environment variables
-
-def setup_interpreter():
-    # If using local ollama with interpreter
-    interpreter.llm.model = os.getenv("CODING_MODEL", "ollama/deepseek-coder")
-    interpreter.llm.api_base = os.getenv("OLLAMA_API_BASE", "http://localhost:11434")
-    
-    # Auto-run commands if true, else require user confirmation
-    auto_run = os.getenv("INTERPRETER_AUTO_RUN", "false").lower() == "true"
-    interpreter.auto_run = auto_run
-
-def execute_command(cli_goal: str):
-    """Passes a high-level goal to open-interpreter to execute on the local machine."""
-    setup_interpreter()
-    print(f"Executing goal via Open Interpreter: {cli_goal}")
-    response = interpreter.chat(cli_goal)
-    return response
+@tool("System Executor")
+def execute_command(cli_goal: str) -> str:
+    """Executes a terminal or shell command on the local machine and returns the output.
+    Useful for running python scripts, tests, or installing packages.
+    """
+    print(f"Executing system command: {cli_goal}")
+    try:
+        result = subprocess.run(
+            cli_goal,
+            shell=True,
+            text=True,
+            capture_output=True,
+            timeout=120
+        )
+        output = f"STDOUT:\n{result.stdout}\n\nSTDERR:\n{result.stderr}\n\nReturn Code: {result.returncode}"
+        return output
+    except Exception as e:
+        return f"Failed to execute command. Error: {str(e)}"
 
 if __name__ == "__main__":
     # Test
-    print("Interpreter tool loaded.")
+    print(execute_command.run("echo 'Hello World'"))

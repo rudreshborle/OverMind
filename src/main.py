@@ -3,6 +3,7 @@ import argparse
 from dotenv import load_dotenv
 
 from src.models.router import reason_with_llm, code_with_llm
+from src.orchestration.state_machine import build_graph
 
 def main():
     load_dotenv()
@@ -28,7 +29,23 @@ def main():
 
     if args.prompt:
         print(f"Received task: {args.prompt}")
-        print("Initializing agents... (Feature under construction)")
+        print("Initializing autonomous agent workflow...")
+        app = build_graph()
+        
+        # Initial State
+        initial_state = {
+            "objective": args.prompt,
+            "iteration": 0
+        }
+        
+        # Stream the execution
+        print("\n--- Starting Execution ---")
+        for output in app.stream(initial_state):
+            # stream() yields dictionaries with node names as keys and state updates as values
+            for key, value in output.items():
+                print(f"Finished node: {key}")
+        
+        print("--- Execution Complete ---")
     else:
         parser.print_help()
 
