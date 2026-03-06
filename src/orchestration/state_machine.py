@@ -3,6 +3,7 @@ from langgraph.graph import StateGraph, END
 from crewai import Task, Crew
 
 from src.agents.personas import create_architect_agent, create_developer_agent, create_tester_agent
+from src.memory.vector_store import query_codebase
 
 # Define the state for our autonomous agent loop
 class AgentState(TypedDict):
@@ -15,10 +16,15 @@ class AgentState(TypedDict):
 
 def planner_node(state: AgentState) -> AgentState:
     print(f"\n[Planner Node] Generating plan for: {state['objective']}")
+    
+    # 1. Retrieve Context
+    print("-> Querying local codebase memory...")
+    local_context = query_codebase(state['objective'], top_k=5)
+    
     architect = create_architect_agent()
     
     task = Task(
-        description=f"Create a step-by-step technical implementation plan for the following objective:\n{state['objective']}\n\nList the precise files to create/edit and the logical steps.",
+        description=f"Create a step-by-step technical implementation plan for the following objective:\n{state['objective']}\n\nHere is relevant context retrieved from the current codebase:\n{local_context}\n\nList the precise files to create/edit and the logical steps.",
         expected_output="A markdown formatted technical implementation plan.",
         agent=architect
     )
