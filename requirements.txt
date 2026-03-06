@@ -1,0 +1,10 @@
+ollama
+litellm
+langgraph
+crewai
+dspy-ai
+chromadb
+llama-index
+open-interpreter
+pytest
+python-dotenv
